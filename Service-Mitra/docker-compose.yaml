@@ -1,0 +1,109 @@
+version: '3.9'
+
+networks:
+  app-network-microservice:
+    external: true
+
+services:
+  # Consul Agent untuk service discovery di node service
+  consul:
+    image: consul:1.14
+    container_name: consul-service
+    command:
+      - agent
+      - -dev
+      - -client=0.0.0.0
+      - -bind=0.0.0.0
+    networks:
+      - app-network-microservice
+    # tidak perlu expose port Consul ke host
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_DATABASE: db_tubes_mitra
+    networks:
+      - app-network-microservice
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    networks:
+      - app-network-microservice
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+    networks:
+      - app-network-microservice
+    ports:
+      - "8082:80"
+
+  service-mitra:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: service-mitra
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      consul:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: db_tubes_mitra
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: 12345
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SERVER_PORT: 9002
+    command:
+      - sh
+      - -c
+      - |
+        java -jar app.jar --server.address=0.0.0.0 --server.port=9002 &
+        sleep 5 &&
+        consul services register \
+          -name=service-mitra \
+          -port=9002 \
+          -check-http=/actuator/health \
+          -check-interval=10s
+    networks:
+      - app-network-microservice
+    labels:
+      - "traefik.enable=true"
+
+      # Middleware to add X-Forwarded-Prefix
+      - "traefik.http.middlewares.prefix-headers.headers.customrequestheaders.X-Forwarded-Prefix=/api/v1/mitras"
+
+      # 1) GraphQL API router
+      - "traefik.http.routers.service-mitra-gql.rule=PathPrefix(`/api/v1/mitras/graphql`)"
+      - "traefik.http.routers.service-mitra-gql.entrypoints=web"
+      - "traefik.http.routers.service-mitra-gql.service=service-mitra"
+      - "traefik.http.routers.service-mitra-gql.middlewares=prefix-headers"
+
+      # 2) GraphiQL UI router
+      - "traefik.http.routers.service-mitra-graphiql.rule=PathPrefix(`/api/v1/mitras/graphiql`)"
+      - "traefik.http.routers.service-mitra-graphiql.entrypoints=web"
+      - "traefik.http.routers.service-mitra-graphiql.service=service-mitra"
+      - "traefik.http.routers.service-mitra-graphiql.middlewares=prefix-headers"
+
+      # shared: target port di container-mu
+      - "traefik.http.services.service-mitra.loadbalancer.server.port=9002"
+    restart: on-failure

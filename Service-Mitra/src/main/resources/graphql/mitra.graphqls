@@ -1,0 +1,50 @@
+""" LIST MITRA RESPONSE """
+type MitraListResponse {
+    id: Int!
+    slug: String!
+    name: String
+    phoneNumber: String
+    type: String
+    status: String
+}
+
+""" MITRA RESPONSE """
+type MitraResponse {
+    id: Int!
+    slug: String!
+    name: String
+    email: String
+    phoneNumber: String
+    address: String
+    type: String
+    status: String
+}
+
+""" MITRA REQUEST """
+input MitraRequest {
+    name: String
+    email: String
+    phoneNumber: String
+    address: String
+    type: String
+    status: String
+}
+
+type Query {
+    """ LIST MITRA """
+    mitras: [MitraListResponse]
+
+    """ MITRA BY ID"""
+    mitraById(id: Int!): MitraResponse
+}
+
+type Mutation {
+    """ CREATE MITRA """
+    createMitra(input: MitraRequest!): MitraResponse
+
+    """ UPDATE MITRA """
+    updateMitra(id: Int!, input: MitraRequest!): MitraResponse
+
+    """ DELETE MITRA """
+    deleteMitra(id: Int!): String!
+}
