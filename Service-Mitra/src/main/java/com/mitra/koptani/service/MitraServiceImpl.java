@@ -136,6 +136,22 @@ public class MitraServiceImpl implements MitraService {
         return "Successfully deleted Mitra";
     }
 
+    @Override
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "MitraService.getMitraList", key = "'mitras'"),
+            @CacheEvict(value = "MitraService.getMitraById", key = "#id")
+    })
+    public String updateStatusMitra(Integer id, String status) {
+        Mitra mitra = mitraRepository.findAllByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new MitraException("Mitra Not Found"));
+
+        mitra.setStatus(status);
+        mitraRepository.save(mitra);
+
+        return "Successfully updated Mitra Status";
+    }
+
     public static String slugify(String input) {
         String baseSlug = input
                 .toLowerCase()

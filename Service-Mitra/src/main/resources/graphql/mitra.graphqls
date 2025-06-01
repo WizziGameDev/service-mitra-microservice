@@ -47,4 +47,7 @@ type Mutation {
 
     """ DELETE MITRA """
     deleteMitra(id: Int!): String!
+
+    """ UPDATE STATUS MITRA """
+    updateStatusMember(id: Int!, status: String): String
 }

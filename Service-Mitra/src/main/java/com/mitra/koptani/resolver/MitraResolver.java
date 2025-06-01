@@ -47,6 +47,11 @@ public class MitraResolver {
         return runVirtual(() -> mitraServiceImpl.deleteMitra(id));
     }
 
+    @MutationMapping
+    public String updateStatusMember(@Argument Integer id, @Argument String status) {
+        return runVirtual(() -> mitraServiceImpl.updateStatusMitra(id, status));
+    }
+
     private <T> T runVirtual(Supplier<T> task) {
         final CompletableFuture<T> result = new CompletableFuture<>();
         Thread.startVirtualThread(() -> {

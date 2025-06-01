@@ -22,4 +22,7 @@ public interface MitraService {
 
     // Delete Mitra By ID
     String deleteMitra(Integer id);
+
+    // Update Status Mitra
+    public String updateStatusMitra(Integer id, String status);
 }
