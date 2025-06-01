@@ -24,5 +24,5 @@ public interface MitraService {
     String deleteMitra(Integer id);
 
     // Update Status Mitra
-    public String updateStatusMitra(Integer id, String status);
+    String updateStatusMitra(Integer id, String status);
 }
