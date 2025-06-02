@@ -31,7 +31,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
+    container_name: phpmyadmin-mitra
     environment:
       PMA_HOST: mysql-mitra
       PMA_PORT: 3306
@@ -59,7 +59,7 @@ services:
       MYSQL_DATABASE: db_tubes_mitra
       MYSQL_USERNAME: root
       MYSQL_PASSWORD: 12345
-      REDIS_HOST: redis
+      REDIS_HOST: redis-mitra
       REDIS_PORT: 6379
       SERVER_PORT: 9002
     networks:
